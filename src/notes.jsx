@@ -190,8 +190,8 @@ function NoteCard({ note, onOpen }) {
 }
 
 function NoteModal({ note, user, token, onClose, onRequireLogin, saved, onSave, onDownloaded }) {
-  if (!note) return null;
   const [msg, setMsg] = useState('');
+  if (!note) return null;
 
   const download = async () => {
     if (!user || !token) { onRequireLogin(); return; }
@@ -314,6 +314,7 @@ function AdminPanel({ token }) {
     } catch (err) { setMsg(err.message); }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { load(); }, []);
 
   const moderate = async (id, action) => {
@@ -420,7 +421,9 @@ export default function App() {
     catch { setDash(null); setNotifications([]); }
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadNotes(); loadAnalytics(); }, [token]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { loadDashboard(); }, [token]);
 
   const onLogin = (newToken, newUser) => { setToken(newToken); setUser(newUser); localStorage.setItem('token', newToken); localStorage.setItem('user', JSON.stringify(newUser)); setPage('dashboard'); };
