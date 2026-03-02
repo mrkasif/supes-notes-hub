@@ -1,0 +1,11 @@
+{
+  "users": [
+    {
+      "id": "2d1479dd-590d-4f2a-bcb3-d5a1e1b61eb6",
+      "username": "klabnotes",
+      "passwordHash": "$2a$10$P8SmGicH0QXEFA2hKxSIwO5a491DNIfmjTSyNkJPtCUmg9tcyBxBS",
+      "createdAt": "2026-03-02T09:38:56.784Z"
+    }
+  ],
+  "notes": []
+}

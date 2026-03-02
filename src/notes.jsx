@@ -1,312 +1,457 @@
-import React, { useState, useMemo } from 'react';
-import { BookOpen, Folder, FileText, Calendar, Menu, ArrowLeft, X } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Bell, Download, Flame, Home, LayoutDashboard, Search, Star, Trophy, Upload, User, Wrench } from 'lucide-react';
 
-// --- MOCK DATA ---
-// This structure holds the data for 3 years, each with 2 semesters.
-const NOTES_DATA = [
-  // --- YEAR 1 ---
-  {
-    year: 1,
-    semester: 1,
-    subjects: [
-      { title: "Operating Systems", code: "CS101", professor: "Prof. Mr. Bhushan kulkarni", notesCount: 3, content: "Introduction to operating system" },
-      { title: "Mathematical Foundation", code: "MATH102", professor: "Prof. Ms. Shruti", notesCount: 2, content: "Sets,Matrices" },
-      { title: "Communication Skills", code: "ENG104", professor: "Prof. Ms. -------", notesCount: 1, content: "Essay writing fundamentals: structure, thesis development, and argumentation. Remember to cite sources properly using MLA format." },
-      { title: "C Programming", code: "C105", professor: "Ms. Pranita Wagh", notesCount: 4, content: "C Basics,Loops,Variables" },
-      { title: "Computer Fundamentals", code: "CF106", professor: "Mr. Laxman Tour", notesCount: 4, content: "Proceccer,Input output devices" },
-      { title: "Writing Skills", code: "WS107", professor: "Mr. --------", notesCount: 4, content: "----------" },
-      { title: "Hindi", code: "CF108", professor: "Ms. Geeta anjali", notesCount: 4, content: "Sant kabir" },
-    ],
-  },
-  {
-    year: 1,
-    semester: 2,
-    subjects: [
-      { title: "Data Structures & Algorithms", code: "CS109", professor: "Ms. Rupali moharkar", notesCount: 5, content: "Notes on linked lists, stacks, queues, and Big O notation for complexity analysis. Priority queues and heaps were covered last week." },
-      { title: "ALP 8086", code: "MATH110", professor: "Prof. Mr. Bhushan Kulkarni", notesCount: 3, content: "------" },
-      { title: "Communication Skills", code: "ENG111", professor: "Prof. Ms. -------", notesCount: 1, content: "Essay writing fundamentals: structure, thesis development, and argumentation. Remember to cite sources properly using MLA format." },
-      { title: "C Programming Advance", code: "C112", professor: "Ms. Pranita Wagh", notesCount: 4, content: "Loops,Variables" },
-      { title: "DBMS", code: "DB113", professor: "Ms. Shruti", notesCount: 4, content: "database management" },
-      { title: "Constitution", code: "WS114", professor: "Mr. --------", notesCount: 4, content: "----------" },
-    ],
-  },
-  // --- YEAR 2 ---
-  {
-    year: 2,
-    semester: 1,
-    subjects: [
-      { title: "ERP", code: "CS201", professor: "Ms. Rupali Moharkar", notesCount: 7, content: "----------" },
-      { title: "C++", code: "CS202", professor: "Ms. Seema Navlei", notesCount: 3, content: "---------" },
-      { title: "Statistical Method", code: "MATH201", professor: "Mr. Bhushan Kulkarni", notesCount: 4, content: "Introduction to probability distributions (Binomial, Poisson), hypothesis testing, and regression analysis. Study the central limit theorem." },
-      { title: "Web Developement", code: "WB201", professor: "Ms. Seema Navle", notesCount: 3, content: "---------" },
-      { title: "Basics Of Android", code: "A201", professor: "Mr. Ajinkya Mashalkar", notesCount: 3, content: "---------" },
-      { title: "English", code: "EN201", professor: "Ms. ---------", notesCount: 3, content: "---------" },
-    ], 
-  },
-  {
-    year: 2,
-    semester: 2,
-    subjects: [
-    
-    ],
-  },
-  // --- YEAR 3 ---
-  {
-    year: 3,
-    semester: 1,
-    subjects: [
-  
-    ],
-  },
-  {
-    year: 3,
-    semester: 2,
-    subjects: [
-    
-    ],
-  },
-];
+const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000';
+const DEMO_USERNAME = 'klabnotes';
+const DEMO_PASSWORD = '123456';
+const DEMO_PDF = 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf';
 
-// --- UTILITY FUNCTION: Calculates total subjects/notes for a given year ---
-const getYearSummary = (year) => {
-  const yearData = NOTES_DATA.filter(d => d.year === year);
-  const allSubjects = yearData.flatMap(d => d.subjects);
-  const totalSubjects = allSubjects.length;
-  const totalNotes = allSubjects.reduce((sum, subject) => sum + subject.notesCount, 0);
+const SAMPLE_NOTES = [
+  'Data Structures Unit 2',
+  'Operating Systems Unit 4',
+  'DBMS Quick Revision',
+  'Computer Networks Notes',
+  'Java OOP Cheat Sheet',
+  'Maths 3 Solved Set',
+  'TOC End Sem Pack',
+  'Software Engineering Midterm',
+  'COA Unit 1-3',
+  'Python Lab Manual',
+  'AI Basics Intro',
+  'ML Regression Notes',
+  'Cyber Security Unit 2',
+  'Cloud Computing Notes',
+  'Web Tech Unit 5',
+  'Compiler Design Cheats',
+  'Digital Logic Design',
+  'C Programming Basics',
+  'Physics First Year',
+  'Discrete Maths Unit 1',
+  'Microprocessors 8086',
+  'Android Dev Notes',
+  'DevOps Intro',
+  'Project Management Notes',
+  'Statistics for CS',
+  'JavaScript ES6 Notes',
+  'System Design Basics',
+  'Data Mining Crash Notes',
+  'Cryptography Unit 3',
+  'IoT Fundamentals',
+].map((title, i) => {
+  const subjects = ['DSA', 'Operating Systems', 'DBMS', 'Networks', 'AI', 'ML', 'Cloud', 'Web Tech', 'Compiler', 'Maths'];
+  const branches = ['CSE', 'IT', 'ENTC'];
+  const universities = ['SPPU', 'MU', 'AKTU'];
+  const uploaders = ['Rohit', 'Aakash', 'Neha', 'Priya', 'Kiran', 'Vivek', 'Riya', 'Pooja', 'Sana', 'Arjun'];
+  const semester = `Sem ${1 + (i % 8)}`;
+  const verified = i % 7 === 0;
+  const recommended = i % 5 === 0;
+  return {
+    id: `s-${i + 1}`,
+    title,
+    subject: subjects[i % subjects.length],
+    semester,
+    branch: branches[i % branches.length],
+    university: universities[i % universities.length],
+    uploader: uploaders[i % uploaders.length],
+    downloads: 420 - i * 9,
+    rating: Number((4.8 - (i % 10) * 0.1).toFixed(1)),
+    ratingCount: 12 + (i % 28),
+    verified,
+    recommended,
+    uploadDate: new Date(2026, 1, 28 - i).toISOString(),
+    expiresAt: verified ? null : (Date.now() + (45 - i) * 24 * 60 * 60 * 1000),
+    fileUrl: DEMO_PDF,
+    status: 'approved',
+    views: 180 - i * 3,
+  };
+});
 
-  return { totalSubjects, totalNotes };
-};
+const fmt = (d) => new Date(d).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
 
+function expiresLabel(note) {
+  if (note.expiresAt === null || note.verified) return 'Never expires';
+  if (typeof note.expiresAt !== 'number') return 'Expires in 30 days';
+  const left = Math.ceil((note.expiresAt - Date.now()) / (1000 * 60 * 60 * 24));
+  if (left <= 0) return 'Expired';
+  return `Expires in: ${left} days`;
+}
 
-// --- COMPONENTS ---
+async function parseResponse(res) {
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
+}
 
-const YearTab = ({ year, isActive, onClick }) => {
-  const { totalSubjects, totalNotes } = getYearSummary(year);
+function getAuthHeader(token) {
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
-  const activeClasses = isActive
-    ? "bg-white shadow-xl ring-2 ring-indigo-500 text-indigo-700 font-semibold"
-    : "bg-gray-100 text-gray-600 hover:bg-gray-200";
-
+function Navbar({ page, setPage, user, onOpenAuth, onLogout }) {
+  const items = [
+    ['home', 'Home', Home],
+    ['browse', 'Browse', Search],
+    ['upload', 'Upload', Upload],
+    ['dashboard', 'Dashboard', LayoutDashboard],
+    ['leaderboard', 'Leaderboard', Trophy],
+  ];
   return (
-    <button
-      onClick={() => onClick(year)}
-      className={`p-4 rounded-xl transition-all duration-300 transform hover:scale-[1.02] w-full md:w-48 lg:w-56 text-left ${activeClasses}`}
-      aria-label={`Select Year ${year} - ${isActive ? 'Active' : 'Inactive'}`}
-    >
-      <div className="text-xl font-bold mb-1">Year {year}</div>
-      <div className="text-sm space-y-1">
-        <div className="flex justify-between">
-          <span className="font-medium">Subjects</span>
-          <span className="font-mono">{totalSubjects}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="font-medium">Notes</span>
-          <span className="font-mono">{totalNotes}</span>
-        </div>
-      </div>
-      {isActive && (
-        <span className="absolute top-2 right-2 px-2 py-0.5 text-xs font-bold bg-indigo-500 text-white rounded-full">Active</span>
-      )}
-    </button>
-  );
-};
-
-const SemesterTab = ({ semester, isActive, onClick }) => {
-  const activeClasses = isActive
-    ? "bg-white shadow-md text-indigo-600 font-bold border-b-2 border-indigo-600"
-    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50";
-
-  return (
-    <button
-      onClick={() => onClick(semester)}
-      className={`px-6 py-3 transition-all duration-200 rounded-t-lg ${activeClasses}`}
-      aria-label={`Select Semester ${semester} - ${isActive ? 'Active' : 'Inactive'}`}
-    >
-      Semester {semester}
-    </button>
-  );
-};
-
-// Now accepts an onSelect function from the parent
-const SubjectCard = ({ subject, onSelect }) => (
-  <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 flex flex-col justify-between transition-all duration-300 hover:shadow-xl hover:border-indigo-200">
-    <div>
-      <div className="flex items-center mb-3">
-        <BookOpen className="w-5 h-5 text-indigo-500 mr-2" />
-        <h3 className="text-lg font-semibold text-gray-800">{subject.title}</h3>
-      </div>
-      <p className="text-sm text-indigo-500 font-medium mb-4 ml-7">{subject.code}</p>
-      
-      <p className="text-sm text-gray-500 ml-7 mb-4">
-        {subject.professor}
-      </p>
-    </div>
-    
-    <div className="flex justify-between items-center pt-4 border-t border-gray-50">
-      <div className="flex items-center text-sm text-gray-600">
-        <FileText className="w-4 h-4 mr-2 text-blue-400" />
-        <span className='font-mono'>{subject.notesCount} notes</span>
-      </div>
-      <button
-        // UPDATED: Now calls the onSelect function to show the detail view
-        onClick={() => onSelect(subject)}
-        className="px-4 py-2 text-sm font-medium text-white bg-indigo-500 rounded-lg hover:bg-indigo-600 transition duration-150 shadow-md hover:shadow-lg"
-        aria-label={`View notes for ${subject.title}`}
-      >
-        View Notes
-      </button>
-    </div>
-  </div>
-);
-
-// NEW Component for showing notes detail
-const NotesDetail = ({ subject, onBack }) => (
-    <div className="p-6 bg-white rounded-xl shadow-2xl min-h-[70vh]">
-        <header className="mb-6 pb-4 border-b border-gray-200 flex justify-between items-center">
-            <button 
-                onClick={onBack} 
-                className="flex items-center text-indigo-600 hover:text-indigo-800 transition duration-150 p-2 rounded-lg bg-indigo-50 hover:bg-indigo-100"
-                aria-label="Back to dashboard"
-            >
-                <ArrowLeft className="w-5 h-5 mr-2" />
-                <span className="font-semibold text-sm">Back to Dashboard</span>
+    <nav className="sticky top-0 z-20 bg-zinc-950/95 border-b border-zinc-800 backdrop-blur px-4 py-3">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+        <button onClick={() => setPage('home')} className="text-zinc-100 text-xl font-bold">NotesHub</button>
+        <div className="hidden md:flex gap-2">
+          {items.map(([id, label, Icon]) => (
+            <button key={id} onClick={() => setPage(id)} className={`px-3 py-2 rounded-lg text-sm ${page === id ? 'bg-indigo-600 text-white' : 'text-zinc-300 hover:bg-zinc-800'}`}>
+              <span className="inline-flex items-center gap-2"><Icon size={14} />{label}</span>
             </button>
-            <h2 className="text-2xl font-extrabold text-gray-900 flex items-center ml-4">
-                <FileText className="w-6 h-6 mr-3 text-blue-500" />
-                {subject.title} Notes
-            </h2>
-            <div>{/* Spacer */}</div>
-        </header>
-
-        <div className="space-y-4">
-            <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-100">
-                <p className="text-sm text-gray-700 font-medium">Course Code: <span className="font-mono text-indigo-600 ml-1">{subject.code}</span></p>
-                <p className="text-sm text-gray-700 font-medium">Professor: <span className="text-gray-800 ml-1">{subject.professor}</span></p>
-                <p className="text-sm text-gray-700 font-medium">Total Notes Files: <span className="font-bold text-lg text-green-600 ml-1">{subject.notesCount}</span></p>
-            </div>
-            
-            <div className="mt-8">
-                <h3 className="text-xl font-bold text-gray-800 mb-3 border-b pb-2">Summary of Key Notes</h3>
-                <div className="bg-blue-50 p-5 rounded-lg border-l-4 border-blue-400 text-gray-700">
-                    <p className="leading-relaxed whitespace-pre-wrap">{subject.content}</p>
-                </div>
-
-                <div className="mt-6 text-center">
-                    <button className="px-6 py-3 bg-green-500 text-white font-bold rounded-xl shadow-lg hover:bg-green-600 transition duration-200">
-                        Download All {subject.notesCount} Files
-                    </button>
-                    <p className="text-xs text-gray-400 mt-2">Simulated action: actual download not implemented.</p>
-                </div>
-            </div>
+          ))}
+          {user?.role === 'admin' && (
+            <button onClick={() => setPage('admin')} className={`px-3 py-2 rounded-lg text-sm ${page === 'admin' ? 'bg-indigo-600 text-white' : 'text-zinc-300 hover:bg-zinc-800'}`}>
+              <span className="inline-flex items-center gap-2"><Wrench size={14} />Admin</span>
+            </button>
+          )}
         </div>
-    </div>
-);
-
-
-// --- MAIN APP COMPONENT ---
-export default function App() {
-  const years = [1, 2, 3];
-  const semesters = [1, 2];
-
-  const [activeYear, setActiveYear] = useState(years[0]);
-  const [activeSemester, setActiveSemester] = useState(semesters[0]);
-  // NEW STATE: Holds the subject object to show the detail view, or null if on dashboard
-  const [selectedSubject, setSelectedSubject] = useState(null);
-
-  // Filter the data based on active year and semester
-  const activeContent = useMemo(() => {
-    const data = NOTES_DATA.find(d => d.year === activeYear && d.semester === activeSemester);
-    return data ? data.subjects : [];
-  }, [activeYear, activeSemester]);
-
-  // If a subject is selected, render the detail view
-  if (selectedSubject) {
-    return (
-        <div className="min-h-screen bg-gray-50 p-4 sm:p-8 font-sans">
-            <NotesDetail 
-                subject={selectedSubject} 
-                onBack={() => setSelectedSubject(null)} // Function to reset and go back to dashboard
-            />
-            <footer className="text-center p-4 text-sm text-gray-400 border-t border-gray-200 mt-8">
-                © 2024 College Notes Tracker. Built with React and Tailwind CSS.
-            </footer>
+        <div className="flex items-center gap-2">
+          {user ? (
+            <>
+              <button onClick={() => setPage('profile')} className="px-3 py-2 rounded-lg text-sm bg-zinc-800 text-zinc-100"><span className="inline-flex items-center gap-2"><User size={14} />{user.username}</span></button>
+              <button onClick={onLogout} className="text-rose-300 text-sm">Logout</button>
+            </>
+          ) : (
+            <button onClick={onOpenAuth} className="px-3 py-2 rounded-lg text-sm bg-indigo-600 text-white">Login</button>
+          )}
         </div>
-    );
-  }
+      </div>
+    </nav>
+  );
+}
 
-  // Otherwise, render the main dashboard
+function AuthModal({ onClose, onLogin }) {
+  const [isReg, setReg] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [msg, setMsg] = useState('');
+
+  const submit = async (e) => {
+    e.preventDefault();
+    try {
+      const endpoint = isReg ? '/api/auth/register' : '/api/auth/login';
+      const data = await parseResponse(await fetch(`${API_BASE}${endpoint}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }),
+      }));
+      onLogin(data.token, data.user);
+      onClose();
+    } catch (err) { setMsg(err.message); }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 p-4 sm:p-8 font-sans">
-      <header className="mb-8">
-        <h1 className="text-3xl font-extrabold text-gray-900 flex items-center">
-          <Folder className="w-7 h-7 mr-3 text-indigo-500" />
-          College Notes Dashboard
-        </h1>
-        <p className="text-gray-500 mt-1">Organize your academic journey across all years and semesters.</p>
-      </header>
-
-      {/* 1. Year Selection Tabs */}
-      <div className="mb-10 p-4 bg-white rounded-xl shadow-md">
-        <h2 className="text-lg font-bold text-gray-700 mb-4">Academic Years</h2>
-        <div className="flex flex-wrap gap-4 justify-start">
-          {years.map((year) => (
-            <div key={year} className="relative">
-              <YearTab
-                year={year}
-                isActive={activeYear === year}
-                onClick={setActiveYear}
-              />
-            </div>
-          ))}
+    <div className="fixed inset-0 z-30 bg-black/70 p-4 flex items-center justify-center">
+      <section className="w-full max-w-lg bg-zinc-900 border border-zinc-800 rounded-xl p-6 text-zinc-100 shadow-xl">
+        <h2 className="text-2xl font-bold mb-2">{isReg ? 'Create ID' : 'Login'}</h2>
+        <p className="text-zinc-400 text-sm mb-3">Demo: {DEMO_USERNAME} / {DEMO_PASSWORD}</p>
+        <div className="flex gap-2 mb-3">
+          <button className="px-3 py-2 rounded-lg bg-zinc-800 text-sm" onClick={() => { setUsername(DEMO_USERNAME); setPassword(DEMO_PASSWORD); setReg(false); }}>Use Demo</button>
+          <button className="px-3 py-2 rounded-lg bg-zinc-800 text-sm" onClick={onClose}>Close</button>
         </div>
-      </div>
-
-      {/* 2. Semester Selection Tabs */}
-      <div className="mb-6 border-b border-gray-200">
-        <div className="flex space-x-4 overflow-x-auto">
-          {semesters.map((semester) => (
-            <SemesterTab
-              key={semester}
-              semester={semester}
-              isActive={activeSemester === semester}
-              onClick={setActiveSemester}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* 3. Subject Display Area */}
-      <div className="mb-8">
-        <div className="flex items-center text-lg font-semibold text-gray-700 mb-5">
-          <Calendar className="w-5 h-5 mr-2 text-indigo-500" />
-          <span>Year {activeYear} - Semester {activeSemester}</span>
-          <span className="ml-4 px-3 py-1 text-sm font-medium bg-indigo-100 text-indigo-700 rounded-full">
-            {activeContent.length} subjects
-          </span>
-        </div>
-
-        {activeContent.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {activeContent.map((subject) => (
-              <SubjectCard 
-                key={subject.code} 
-                subject={subject} 
-                onSelect={setSelectedSubject} // Passed down the function
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center p-12 bg-white rounded-xl shadow-md border border-gray-100">
-            <Menu className="w-10 h-10 mx-auto text-gray-400 mb-3" />
-            <p className="text-lg font-medium text-gray-600">No subjects scheduled for this semester yet.</p>
-            <p className="text-sm text-gray-400 mt-1">Check back later or add new course details.</p>
-          </div>
-        )}
-      </div>
-
-      <footer className="text-center p-4 text-sm text-gray-400 border-t border-gray-200 mt-8">
-        © 2024 College Notes Tracker. Built with React and Tailwind CSS.
-      </footer>
+        <form onSubmit={submit} className="space-y-3">
+          <input className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2" placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} minLength={3} required />
+          <input className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2" placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} required />
+          <button className="w-full py-2 rounded-lg bg-indigo-600 text-white">Continue</button>
+        </form>
+        <button className="mt-3 text-indigo-400 text-sm" onClick={() => setReg((v) => !v)}>{isReg ? 'Have account? Login' : 'Need account? Register'}</button>
+        {msg && <p className="text-zinc-300 text-sm mt-2">{msg}</p>}
+      </section>
     </div>
+  );
+}
+
+function NoteCard({ note, onOpen }) {
+  return (
+    <article className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 shadow-lg hover:shadow-indigo-900/20 hover:-translate-y-0.5 hover:border-zinc-700 transition">
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <h3 className="text-zinc-100 font-semibold text-xl leading-tight">{note.title}</h3>
+        {note.verified && <span className="text-xs px-2 py-1 rounded-full bg-emerald-600/20 text-emerald-300 border border-emerald-600/40">Verified</span>}
+      </div>
+      {note.recommended && <p className="text-xs text-amber-300 mb-2">Recommended</p>}
+      <p className="text-zinc-400 text-sm mb-1">{note.branch} - {note.semester}</p>
+      <p className="text-zinc-500 text-sm mb-3">{note.subject}</p>
+      <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+        <p className="text-zinc-400">⏳ {expiresLabel(note)}</p>
+        <p className="text-zinc-400">✅ {note.verified ? 'Verified' : 'Community'}</p>
+        <p className="text-zinc-400">⭐ {note.rating}</p>
+        <p className="text-zinc-400">⬇ {note.downloads}</p>
+      </div>
+      <div className="flex justify-between text-sm mb-3">
+        <span className="text-amber-300 inline-flex items-center gap-1"><Star size={14} />{note.rating} ({note.ratingCount})</span>
+        <span className="text-zinc-300 inline-flex items-center gap-1"><Download size={14} />{note.downloads}</span>
+      </div>
+      <button onClick={() => onOpen(note)} className="w-full py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 transition">Open Note</button>
+    </article>
+  );
+}
+
+function NoteModal({ note, user, token, onClose, onRequireLogin, saved, onSave, onDownloaded }) {
+  if (!note) return null;
+  const [msg, setMsg] = useState('');
+
+  const download = async () => {
+    if (!user || !token) { onRequireLogin(); return; }
+    try {
+      if (!String(note.id).startsWith('s-')) {
+        await parseResponse(await fetch(`${API_BASE}/api/notes/${note.id}/download`, { method: 'POST', headers: getAuthHeader(token) }));
+      }
+      window.open(note.fileUrl, '_blank', 'noopener,noreferrer');
+      onDownloaded(note.id);
+    } catch (err) { setMsg(err.message); }
+  };
+
+  return (
+    <div className="fixed inset-0 z-30 bg-black/80 p-4 overflow-y-auto">
+      <div className="max-w-5xl mx-auto bg-zinc-950 border border-zinc-800 rounded-xl p-5">
+        <div className="flex justify-between items-start gap-3 mb-4">
+          <div>
+            <h2 className="text-zinc-100 text-3xl font-bold">{note.title}</h2>
+            <p className="text-zinc-400 text-sm">{note.subject} | {note.semester} | Uploaded by {note.uploader} | {fmt(note.uploadDate)}</p>
+            <p className="text-zinc-500 text-sm">Downloads: {note.downloads} | Rating: {note.rating} ({note.ratingCount})</p>
+            <p className="text-zinc-500 text-sm">{expiresLabel(note)}</p>
+          </div>
+          <button onClick={onClose} className="px-3 py-2 rounded-lg bg-zinc-800 text-zinc-200">Close</button>
+        </div>
+        <div className="grid md:grid-cols-3 gap-3 mb-4">
+          <button className="py-2 rounded-lg bg-indigo-600 text-white" onClick={onSave}>{saved ? 'Saved to Favorites' : 'Save to Favorites'}</button>
+          <button className="py-2 rounded-lg bg-zinc-800 text-zinc-100">Report this file</button>
+          <button className="py-2 rounded-lg bg-emerald-600 text-white" onClick={download}>{user ? 'Download' : 'Login to Download'}</button>
+        </div>
+        <iframe title="PDF Preview" src={note.fileUrl} className="w-full h-[68vh] border border-zinc-800 rounded-lg" />
+        {msg && <p className="mt-2 text-sm text-rose-300">{msg}</p>}
+      </div>
+    </div>
+  );
+}
+
+function UploadSection({ user, token, onRequireLogin, onUploaded }) {
+  const [title, setTitle] = useState('');
+  const [subject, setSubject] = useState('');
+  const [pdf, setPdf] = useState(null);
+  const [msg, setMsg] = useState('');
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!user || !token) { onRequireLogin(); return; }
+    const fd = new FormData();
+    fd.append('title', title);
+    fd.append('subject', subject);
+    fd.append('pdf', pdf);
+    try {
+      await parseResponse(await fetch(`${API_BASE}/api/notes/upload`, { method: 'POST', headers: getAuthHeader(token), body: fd }));
+      setTitle(''); setSubject(''); setPdf(null); setMsg('Uploaded. Waiting for admin approval. +10 points added.');
+      onUploaded();
+    } catch (err) {
+      if (String(err.message).toLowerCase().includes('duplicate')) setMsg('Duplicate detected. A similar note already exists.');
+      else setMsg(err.message);
+    }
+  };
+
+  return (
+    <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 shadow">
+      <h2 className="text-zinc-100 text-2xl font-bold mb-4">Upload Notes (PDF)</h2>
+      <form onSubmit={submit} className="space-y-3">
+        <input className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-zinc-100" placeholder="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <input className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-zinc-100" placeholder="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} required />
+        <input className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-zinc-100" type="file" accept="application/pdf" onChange={(e) => setPdf(e.target.files?.[0] || null)} required />
+        <button className="px-4 py-2 rounded-lg bg-emerald-600 text-white">Upload</button>
+      </form>
+      {msg && <p className="text-sm text-zinc-300 mt-2">{msg}</p>}
+    </section>
+  );
+}
+
+function Dashboard({ data, notifications }) {
+  const stats = data || { totalUploads: 0, totalDownloads: 0, totalViews: 0, reputation: 0, badge: 'Bronze Contributor', recentActivity: [] };
+  return (
+    <section className="space-y-4">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+        <h2 className="text-zinc-100 text-3xl font-bold mb-2">User Dashboard</h2>
+        <p className="text-zinc-400">You uploaded {stats.totalUploads} notes. Your notes got {stats.totalDownloads} downloads. Reputation: {stats.reputation} points.</p>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 mt-4">
+          <StatCard title="Total uploads" value={stats.totalUploads} />
+          <StatCard title="Total downloads" value={stats.totalDownloads} />
+          <StatCard title="Total views" value={stats.totalViews} />
+          <StatCard title="Reputation" value={stats.reputation} />
+          <StatCard title="Badge" value={stats.badge} />
+        </div>
+      </div>
+      <div className="grid lg:grid-cols-2 gap-4">
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+          <h3 className="text-zinc-100 font-semibold mb-2">Recent Activity</h3>
+          {(stats.recentActivity || []).length === 0 ? <p className="text-zinc-400 text-sm">No activity yet.</p> : stats.recentActivity.map((x, i) => <p className="text-zinc-300 text-sm mb-1" key={i}>{x}</p>)}
+        </div>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+          <h3 className="text-zinc-100 font-semibold mb-2 inline-flex items-center gap-2"><Bell size={16} />Notifications</h3>
+          {notifications.length === 0 ? <p className="text-zinc-400 text-sm">No notifications yet.</p> : notifications.map((n) => <p key={n.id} className="text-zinc-300 text-sm mb-1">{n.message}</p>)}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StatCard({ title, value }) {
+  return <div className="bg-zinc-950 border border-zinc-800 rounded-lg p-3"><p className="text-zinc-500 text-sm">{title}</p><p className="text-zinc-100 text-2xl font-bold">{value}</p></div>;
+}
+
+function AdminPanel({ token }) {
+  const [stats, setStats] = useState(null);
+  const [pending, setPending] = useState([]);
+  const [expired, setExpired] = useState([]);
+  const [msg, setMsg] = useState('');
+
+  const load = async () => {
+    try {
+      const [s, p] = await Promise.all([
+        parseResponse(await fetch(`${API_BASE}/api/admin/stats`, { headers: getAuthHeader(token) })),
+        parseResponse(await fetch(`${API_BASE}/api/admin/pending`, { headers: getAuthHeader(token) })),
+      ]);
+      setStats(s); setPending(p.notes || []); setExpired(p.expired || []);
+    } catch (err) { setMsg(err.message); }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const moderate = async (id, action) => {
+    try {
+      await parseResponse(await fetch(`${API_BASE}/api/admin/notes/${id}/${action}`, { method: 'POST', headers: getAuthHeader(token) }));
+      load();
+    } catch (err) { setMsg(err.message); }
+  };
+
+  const verify = async (id) => {
+    try {
+      await parseResponse(await fetch(`${API_BASE}/api/admin/notes/${id}/verify`, { method: 'POST', headers: { ...getAuthHeader(token), 'Content-Type': 'application/json' }, body: JSON.stringify({ verified: true, recommended: true }) }));
+      load();
+    } catch (err) { setMsg(err.message); }
+  };
+
+  return (
+    <section className="space-y-4">
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+        <h2 className="text-zinc-100 text-2xl font-bold mb-2">Admin Panel</h2>
+        {stats && <p className="text-zinc-400 text-sm">Pending: {stats.pending} | Approved: {stats.approved} | Rejected: {stats.rejected} | Expired: {stats.expired} | Users: {stats.users} | Banned: {stats.bannedUsers}</p>}
+      </div>
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+        <h3 className="text-zinc-100 font-semibold mb-3">Pending Uploads</h3>
+        {pending.length === 0 ? <p className="text-zinc-400 text-sm">No pending uploads.</p> : pending.map((n) => (
+          <div key={n.id} className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 mb-2 flex items-center justify-between gap-2">
+            <p className="text-zinc-200 text-sm">{n.title} - {n.subject} ({n.ownerUsername})</p>
+            <div className="flex gap-2">
+              <button onClick={() => moderate(n.id, 'approve')} className="px-2 py-1 text-xs rounded bg-emerald-600 text-white">Approve</button>
+              <button onClick={() => moderate(n.id, 'reject')} className="px-2 py-1 text-xs rounded bg-rose-600 text-white">Reject</button>
+              <button onClick={() => verify(n.id)} className="px-2 py-1 text-xs rounded bg-indigo-600 text-white">Verify</button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+        <h3 className="text-zinc-100 font-semibold mb-3">Expired Notes</h3>
+        {expired.length === 0 ? <p className="text-zinc-400 text-sm">No expired notes.</p> : expired.map((n) => (
+          <div key={n.id} className="bg-zinc-950 border border-zinc-800 rounded-lg p-3 mb-2">
+            <p className="text-zinc-200 text-sm">{n.title} - {n.subject} ({n.ownerUsername})</p>
+            <p className="text-zinc-500 text-xs">Expired on: {n.expiresAt ? fmt(n.expiresAt) : 'N/A'}</p>
+          </div>
+        ))}
+      </div>
+      {msg && <p className="text-sm text-rose-300">{msg}</p>}
+    </section>
+  );
+}
+
+function Footer() {
+  return <footer className="mt-10 border-t border-zinc-800 py-8 text-sm text-zinc-500"><div className="max-w-7xl mx-auto px-4 grid sm:grid-cols-2 md:grid-cols-3 gap-3"><p>About</p><p>Contact</p><p>Privacy Policy</p><p>DMCA</p><p>Terms</p><p>Social Links</p></div></footer>;
+}
+
+export default function App() {
+  const [page, setPage] = useState(localStorage.getItem('user') ? 'dashboard' : 'home');
+  const [authOpen, setAuthOpen] = useState(false);
+  const [token, setToken] = useState(localStorage.getItem('token') || '');
+  const [user, setUser] = useState(() => { const raw = localStorage.getItem('user'); return raw ? JSON.parse(raw) : null; });
+  const [apiNotes, setApiNotes] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [saved, setSaved] = useState([]);
+  const [filters, setFilters] = useState({ university: 'All', branch: 'All', semester: 'All', subject: '', sortBy: 'newest' });
+  const [analytics, setAnalytics] = useState({ totalNotes: 0, totalDownloads: 0, activeContributors: 0 });
+  const [dash, setDash] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+
+  const mergedNotes = useMemo(() => {
+    const mapped = apiNotes.map((n) => ({
+      id: n.id, title: n.title, subject: n.subject, semester: n.semester || 'Sem 3', branch: n.branch || 'IT', university: n.university || 'SPPU',
+      uploader: n.ownerUsername, uploadDate: n.createdAt, downloads: n.downloads || 0, views: n.views || 0,
+      expiresAt: n.expiresAt ?? null,
+      rating: n.ratingCount ? Number(((n.ratingSum || 0) / n.ratingCount).toFixed(1)) : 0,
+      ratingCount: n.ratingCount || 0, verified: !!n.verified, recommended: !!n.recommended, fileUrl: `${API_BASE}${n.fileUrl}`, status: n.status || 'pending',
+    }));
+    return [...mapped, ...SAMPLE_NOTES];
+  }, [apiNotes]);
+
+  const filteredNotes = useMemo(() => {
+    const list = mergedNotes.filter((n) =>
+      (filters.university === 'All' || n.university === filters.university) &&
+      (filters.branch === 'All' || n.branch === filters.branch) &&
+      (filters.semester === 'All' || n.semester === filters.semester) &&
+      (!filters.subject.trim() || n.subject.toLowerCase().includes(filters.subject.toLowerCase()))
+    );
+    if (filters.sortBy === 'downloads') list.sort((a, b) => b.downloads - a.downloads);
+    else if (filters.sortBy === 'rating') list.sort((a, b) => b.rating - a.rating);
+    else list.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+    return list;
+  }, [mergedNotes, filters]);
+
+  const loadNotes = async () => {
+    try { const data = await parseResponse(await fetch(`${API_BASE}/api/notes`, { headers: getAuthHeader(token) })); setApiNotes(data.notes || []); }
+    catch { setApiNotes([]); }
+  };
+
+  const loadAnalytics = async () => {
+    try { const data = await parseResponse(await fetch(`${API_BASE}/api/analytics`)); setAnalytics(data); }
+    catch { setAnalytics({ totalNotes: 0, totalDownloads: 0, activeContributors: 0 }); }
+  };
+
+  const loadDashboard = async () => {
+    if (!token) return;
+    try { const data = await parseResponse(await fetch(`${API_BASE}/api/users/me/dashboard`, { headers: getAuthHeader(token) })); setDash(data.stats); setNotifications(data.notifications || []); }
+    catch { setDash(null); setNotifications([]); }
+  };
+
+  useEffect(() => { loadNotes(); loadAnalytics(); }, [token]);
+  useEffect(() => { loadDashboard(); }, [token]);
+
+  const onLogin = (newToken, newUser) => { setToken(newToken); setUser(newUser); localStorage.setItem('token', newToken); localStorage.setItem('user', JSON.stringify(newUser)); setPage('dashboard'); };
+  const onLogout = () => { setToken(''); setUser(null); localStorage.removeItem('token'); localStorage.removeItem('user'); setPage('home'); };
+
+  return (
+    <main className="min-h-screen bg-black">
+      <Navbar page={page} setPage={setPage} user={user} onOpenAuth={() => setAuthOpen(true)} onLogout={onLogout} />
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 pt-6">
+        {page === 'home' && (
+          <>
+            <section className="rounded-2xl p-10 bg-gradient-to-br from-zinc-900 via-zinc-950 to-black border border-zinc-800 mb-6 shadow-xl">
+              <p className="text-indigo-400 text-sm mb-2">Study smarter, together</p>
+              <h1 className="text-zinc-100 text-5xl font-extrabold mb-3">Find Verified Semester Notes Instantly.</h1>
+              <p className="text-zinc-400 text-lg mb-5">Upload, preview, rate, and download notes from your college community.</p>
+              <div className="flex gap-3"><button className="px-5 py-3 rounded-lg bg-indigo-600 text-white" onClick={() => setPage('browse')}>Browse Notes</button><button className="px-5 py-3 rounded-lg bg-zinc-800 text-zinc-100" onClick={() => setPage('upload')}>Upload Notes</button></div>
+            </section>
+            <section className="grid sm:grid-cols-3 gap-3 mb-6">{[['Notes Uploaded', analytics.totalNotes], ['Downloads', analytics.totalDownloads], ['Active Contributors', analytics.activeContributors]].map(([k, v]) => <StatCard key={k} title={k} value={v} />)}</section>
+            <section className="mb-6"><h2 className="text-zinc-100 text-2xl font-bold mb-3 inline-flex items-center gap-2"><Flame size={20} />Trending Notes</h2><div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">{mergedNotes.slice().sort((a,b)=>b.downloads-a.downloads).slice(0,6).map((n) => <NoteCard key={n.id} note={n} onOpen={setSelected} />)}</div></section>
+          </>
+        )}
+        {page === 'browse' && <section><h2 className="text-zinc-100 text-2xl font-bold mb-3 inline-flex items-center gap-2"><Search size={20} />Browse Notes</h2><div className="grid lg:grid-cols-4 gap-4"><aside className="bg-zinc-900 border border-zinc-800 rounded-xl p-4"><h3 className="text-zinc-100 mb-2">Filters</h3><div className="space-y-2"><select className="w-full bg-zinc-950 border border-zinc-700 rounded p-2 text-zinc-200" value={filters.university} onChange={(e) => setFilters((f) => ({ ...f, university: e.target.value }))}><option>All</option><option>SPPU</option><option>MU</option><option>AKTU</option></select><select className="w-full bg-zinc-950 border border-zinc-700 rounded p-2 text-zinc-200" value={filters.branch} onChange={(e) => setFilters((f) => ({ ...f, branch: e.target.value }))}><option>All</option><option>CSE</option><option>IT</option><option>ENTC</option></select><select className="w-full bg-zinc-950 border border-zinc-700 rounded p-2 text-zinc-200" value={filters.semester} onChange={(e) => setFilters((f) => ({ ...f, semester: e.target.value }))}><option>All</option><option>Sem 1</option><option>Sem 2</option><option>Sem 3</option><option>Sem 4</option><option>Sem 5</option><option>Sem 6</option><option>Sem 7</option><option>Sem 8</option></select><input className="w-full bg-zinc-950 border border-zinc-700 rounded p-2 text-zinc-200" placeholder="Subject" value={filters.subject} onChange={(e) => setFilters((f) => ({ ...f, subject: e.target.value }))} /><select className="w-full bg-zinc-950 border border-zinc-700 rounded p-2 text-zinc-200" value={filters.sortBy} onChange={(e) => setFilters((f) => ({ ...f, sortBy: e.target.value }))}><option value="newest">Newest</option><option value="downloads">Most Downloaded</option><option value="rating">Rating</option></select></div></aside><div className="lg:col-span-3 grid md:grid-cols-2 xl:grid-cols-3 gap-4">{filteredNotes.map((n) => <NoteCard key={n.id} note={n} onOpen={setSelected} />)}</div></div></section>}
+        {page === 'upload' && <UploadSection user={user} token={token} onRequireLogin={() => setAuthOpen(true)} onUploaded={() => { loadNotes(); loadDashboard(); }} />}
+        {page === 'dashboard' && (user ? <Dashboard data={dash} notifications={notifications} /> : <p className="text-zinc-300">Login required.</p>)}
+        {page === 'leaderboard' && <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-4"><h2 className="text-zinc-100 text-2xl font-bold mb-3 inline-flex items-center gap-2"><Trophy size={20} />Leaderboard</h2>{Object.entries(mergedNotes.reduce((a,n)=>{if(!a[n.uploader])a[n.uploader]={u:0,d:0};a[n.uploader].u+=1;a[n.uploader].d+=n.downloads;return a;},{})).map(([name,v])=>({name,...v})).sort((a,b)=>b.u-a.u||b.d-a.d).map((r,i)=><div key={r.name} className="bg-zinc-950 border border-zinc-800 rounded p-3 mb-2 flex justify-between"><p className="text-zinc-200">#{i+1} {r.name}</p><p className="text-zinc-400 text-sm">{r.u} uploads | {r.d} downloads</p></div>)}</section>}
+        {page === 'profile' && <section className="bg-zinc-900 border border-zinc-800 rounded-xl p-6"><h2 className="text-zinc-100 text-2xl font-bold mb-3">Profile</h2>{!user ? <p className="text-zinc-300">Login required.</p> : <><p className="text-zinc-300">Username: {user.username}</p><p className="text-zinc-400">Role: {user.role}</p><p className="text-zinc-400">Badge: {dash?.badge || user.badge || 'Bronze Contributor'}</p></>}</section>}
+        {page === 'admin' && user?.role === 'admin' && <AdminPanel token={token} />}
+      </div>
+      <Footer />
+      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} onLogin={onLogin} />}
+      {selected && <NoteModal note={selected} user={user} token={token} onClose={() => setSelected(null)} onRequireLogin={() => setAuthOpen(true)} saved={saved.includes(selected.id)} onSave={() => setSaved((s) => s.includes(selected.id) ? s.filter((x) => x !== selected.id) : [...s, selected.id])} onDownloaded={() => { loadNotes(); loadDashboard(); }} />}
+    </main>
   );
 }
